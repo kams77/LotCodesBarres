@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Étiquette blanche avec des barres, centrée dans la zone sûre (108dp) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M30,36h48v36h-48z" />
+    <path android:fillColor="#15181A"
+        android:pathData="M35,41h2v26h-2z M39,41h1v26h-1z M42,41h3v26h-3z M47,41h1v26h-1z M50,41h2v26h-2z M54,41h1v26h-1z M57,41h3v26h-3z M62,41h1v26h-1z M65,41h2v26h-2z M69,41h1v26h-1z M71,41h2v26h-2z" />
+</vector>
