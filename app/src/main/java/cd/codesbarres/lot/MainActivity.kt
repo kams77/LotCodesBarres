@@ -115,7 +115,48 @@ class MainActivity : Activity() {
         btnPdf.setOnClickListener { exportPdf() }
         btnZip.setOnClickListener { exportZip() }
 
+        findViewById<TextView>(R.id.tvVersion).text =
+            "Lot Codes-Barres ${BuildConfig.VERSION_NAME} · fonctionne sans Internet"
+
+        restoreSettings()
         updateSeqPreview()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveSettings()
+    }
+
+    /** Réglages retrouvés au prochain lancement. */
+    private fun saveSettings() {
+        getSharedPreferences("reglages", MODE_PRIVATE).edit()
+            .putString("format", currentFmt().name)
+            .putBoolean("sequence", rgMode.checkedRadioButtonId == R.id.rbSeq)
+            .putString("prefix", etPrefix.text.toString())
+            .putString("suffix", etSuffix.text.toString())
+            .putString("start", etStart.text.toString())
+            .putString("count", etCount.text.toString())
+            .putString("digits", etDigits.text.toString())
+            .putString("list", etList.text.toString())
+            .putInt("cols", spCols.selectedItemPosition)
+            .putBoolean("text", cbText.isChecked)
+            .apply()
+    }
+
+    private fun restoreSettings() {
+        val p = getSharedPreferences("reglages", MODE_PRIVATE)
+        if (!p.contains("format")) return
+        val fi = formats.indexOfFirst { it.name == p.getString("format", null) }
+        if (fi >= 0) spFormat.setSelection(fi)
+        rgMode.check(if (p.getBoolean("sequence", true)) R.id.rbSeq else R.id.rbList)
+        etPrefix.setText(p.getString("prefix", etPrefix.text.toString()))
+        etSuffix.setText(p.getString("suffix", ""))
+        etStart.setText(p.getString("start", "1"))
+        etCount.setText(p.getString("count", "24"))
+        etDigits.setText(p.getString("digits", "5"))
+        etList.setText(p.getString("list", etList.text.toString()))
+        spCols.setSelection(p.getInt("cols", 1).coerceIn(0, colChoices.size - 1))
+        cbText.isChecked = p.getBoolean("text", true)
     }
 
     override fun onDestroy() {

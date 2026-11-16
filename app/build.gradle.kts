@@ -17,7 +17,14 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Code optimisé et ressources inutiles retirées : APK plus léger.
+            // La signature se fait hors du dépôt public (voir README).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -26,6 +33,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+    }
+    buildFeatures {
+        buildConfig = true
     }
 }
 

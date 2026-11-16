@@ -50,5 +50,19 @@ app/src/main/java/cd/codesbarres/lot/
 app/src/main/res/layout/activity_main.xml   interface
 ```
 
-Pour publier sur le Play Store, il faut un APK/AAB **signé en release** :
-**Build → Generate Signed App Bundle / APK** dans Android Studio.
+## Version et signature
+
+- Version actuelle : **1.0** (versionCode 1). Pour une mise à jour, augmentez
+  `versionCode` et `versionName` dans `app/build.gradle.kts`.
+- GitHub Actions produit l'APK release **non signé** (branche `apk`), car ce dépôt
+  est public et la clé de signature ne doit jamais y figurer.
+- Signature, avec la clé `lotcodesbarres-release.jks` gardée en lieu sûr :
+
+```
+java -jar apksigner.jar sign --ks lotcodesbarres-release.jks \
+  --ks-key-alias lotcodesbarres --out LotCodesBarres-v1.0.apk \
+  LotCodesBarres-release-non-signe.apk
+```
+
+Toutes les futures mises à jour doivent être signées avec **la même clé**, sinon
+Android refusera de les installer par-dessus l'ancienne version.

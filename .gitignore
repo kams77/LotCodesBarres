@@ -4,3 +4,7 @@ app/build/
 local.properties
 .idea/
 *.iml
+
+# Clés de signature : ne jamais publier
+*.jks
+*.keystore

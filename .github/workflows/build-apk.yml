@@ -1,5 +1,8 @@
 name: Construire l'APK
 
+# Produit l'APK release NON signé (le dépôt est public : la clé de signature
+# n'y est pas). La signature se fait à part avec apksigner, joint au résultat.
+
 on:
   push:
     branches: [main]
@@ -18,30 +21,36 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v3
-      - name: Compiler l'APK
+      - name: Compiler l'APK release
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log
+          ./gradlew assembleRelease --stacktrace 2>&1 | tee build.log
           exit ${PIPESTATUS[0]}
+      - name: Aligner et rassembler le résultat
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "build-tools : $BT" | tee -a build.log
+          mkdir -p /tmp/out/outils
+          "$BT/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk /tmp/out/LotCodesBarres-release-non-signe.apk
+          cp "$BT/lib/apksigner.jar" /tmp/out/outils/
+          cp build.log /tmp/out/build.log
+          ls -la /tmp/out /tmp/out/outils
       - uses: actions/upload-artifact@v4
         with:
-          name: LotCodesBarres-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-      - name: Publier l'APK sur la branche apk
+          name: LotCodesBarres-release-non-signe
+          path: /tmp/out/LotCodesBarres-release-non-signe.apk
+      - name: Publier sur la branche apk
         run: |
-          mkdir -p /tmp/out
-          cp app/build/outputs/apk/debug/app-debug.apk /tmp/out/LotCodesBarres.apk
-          cp build.log /tmp/out/build.log
           cd /tmp/out
           git init -q -b apk
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add . && git commit -qm "APK ${GITHUB_SHA::7}"
+          git add . && git commit -qm "APK release ${GITHUB_SHA::7}"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" apk
       - name: Publier le journal d'erreur
         if: failure()
         run: |
-          mkdir -p /tmp/err && cp build.log /tmp/err/build.log || echo "pas de journal" > /tmp/err/build.log
+          mkdir -p /tmp/err && (cp build.log /tmp/err/build.log || echo "pas de journal" > /tmp/err/build.log)
           cd /tmp/err
           git init -q -b build-log
           git config user.name "github-actions"
