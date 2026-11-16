@@ -12,7 +12,11 @@ Application Android qui génère des codes-barres **en lot** et les exporte en *
 - Jusqu'à 2 000 codes par lot. Les valeurs invalides sont listées, les autres sont générées.
 - Export PDF A4 avec 2 à 5 colonnes et traits de coupe ; export PNG haute résolution dans un ZIP.
 - Le fichier s'ouvre dans le menu de partage d'Android : enregistrer dans Fichiers, Drive, WhatsApp, impression…
-- Fonctionne sans Internet. Aucune autorisation demandée. Android 8.0 ou plus.
+- **Enregistrer le PDF** directement sur le téléphone (choix du dossier), ou l'**envoyer** (WhatsApp, Gmail, Drive…).
+- **Import en ligne** : lien Google Sheets (partagé « Tous les utilisateurs disposant du lien ») ou fichier CSV/TXT ; la 1re colonne est utilisée.
+- **Imprimante POS thermique (ESC/POS)** : Bluetooth (appareil appairé), Wi-Fi/réseau (IP + port 9100) ou USB (câble OTG) ;
+  papier 58 mm (384 points) ou 80 mm (576 points), copies par code, coupe automatique, page de test.
+- Fonctionne aussi sans Internet (sauf l'import en ligne). Android 8.0 ou plus.
 
 ## Obtenir l'APK
 

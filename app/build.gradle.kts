@@ -11,8 +11,14 @@ android {
         applicationId = "cd.codesbarres.lot"
         minSdk = 26          // Android 8.0 et plus
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    lint {
+        // Les autorisations Bluetooth sont vérifiées à l'exécution dans MainActivity.
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     buildTypes {

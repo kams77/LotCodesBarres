@@ -8,6 +8,7 @@ import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -29,7 +30,16 @@ object Exporter {
     private fun safeName(v: String): String =
         v.replace(Regex("[^A-Za-z0-9._-]"), "_").take(60)
 
+    fun pdfFileName(): String = "codes-barres_${stamp()}.pdf"
+
     fun pdf(ctx: Context, f: Fmt, values: List<String>, showText: Boolean, cols: Int, progress: (Int) -> Unit): File {
+        val out = File(exportDir(ctx), pdfFileName())
+        FileOutputStream(out).use { pdfTo(it, f, values, showText, cols, progress) }
+        return out
+    }
+
+    /** Écrit la planche PDF A4 dans n'importe quel flux (fichier choisi par l'utilisateur, cache…). */
+    fun pdfTo(stream: OutputStream, f: Fmt, values: List<String>, showText: Boolean, cols: Int, progress: (Int) -> Unit) {
         val pageW = 595   // A4 en points
         val pageH = 842
         val margin = 28f
@@ -80,10 +90,8 @@ object Exporter {
             }
             doc.finishPage(page)
         }
-        val out = File(exportDir(ctx), "codes-barres_${stamp()}.pdf")
-        FileOutputStream(out).use { doc.writeTo(it) }
+        doc.writeTo(stream)
         doc.close()
-        return out
     }
 
     fun zip(ctx: Context, f: Fmt, values: List<String>, showText: Boolean, progress: (Int) -> Unit): File {
