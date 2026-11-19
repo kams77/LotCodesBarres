@@ -45,8 +45,13 @@ class MainActivity : Activity() {
         private const val REQ_BT = 20
         private const val ACTION_USB_PERMISSION = "cd.codesbarres.lot.USB_PERMISSION"
         private const val CONN_BT = 0
-        private const val CONN_NET = 1
-        private const val CONN_USB = 2
+        private const val CONN_TPE = 1
+        private const val CONN_NET = 2
+        private const val CONN_USB = 3
+        private const val CONN_SYS = 4
+        /** Imprimante virtuelle des TPE Sunmi (et compatibles), toujours appairée. */
+        private const val INNER_NAME = "InnerPrinter"
+        private const val INNER_ADDR = "00:11:22:33:44:55"
     }
 
     private val worker = Executors.newSingleThreadExecutor()
@@ -82,6 +87,10 @@ class MainActivity : Activity() {
     private lateinit var boxBt: View
     private lateinit var boxNet: View
     private lateinit var boxUsb: View
+    private lateinit var boxTpe: View
+    private lateinit var boxSys: View
+    private lateinit var tvTpe: TextView
+    private lateinit var rgSys: RadioGroup
     private lateinit var spBt: Spinner
     private lateinit var tvBt: TextView
     private lateinit var etIp: EditText
@@ -134,7 +143,8 @@ class MainActivity : Activity() {
 
         spPaper.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, paperChoices.map { "$it mm" })
         spConn.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item,
-            listOf("Bluetooth", "Wi-Fi / réseau", "USB (câble OTG)"))
+            listOf("Bluetooth (imprimante POS)", "TPE – imprimante intégrée", "Wi-Fi / réseau (POS)",
+                "USB – câble OTG (POS)", "Impression Android (TPE, Wi-Fi, PDF)"))
         spConn.onItemSelectedListener = onSelect { showConnBox(it) }
 
         rgMode.setOnCheckedChangeListener { _, checkedId ->
@@ -159,11 +169,12 @@ class MainActivity : Activity() {
         btnZip.setOnClickListener { shareZip() }
         btnBtRefresh().setOnClickListener { withBluetooth { refreshBtDevices() } }
         findViewById<Button>(R.id.btnUsbDetect).setOnClickListener { detectUsb() }
+        findViewById<Button>(R.id.btnTpeDetect).setOnClickListener { withBluetooth { detectTpe() } }
         btnTestPrint.setOnClickListener { print(test = true) }
         btnPrint.setOnClickListener { print(test = false) }
 
         findViewById<TextView>(R.id.tvVersion).text =
-            "Lot Codes-Barres ${BuildConfig.VERSION_NAME} · PDF · Internet · imprimantes POS"
+            "Lot Codes-Barres ${BuildConfig.VERSION_NAME} · PDF · Internet · TPE · POS · Bluetooth"
 
         ContextCompat.registerReceiver(this, usbReceiver, IntentFilter(ACTION_USB_PERMISSION), ContextCompat.RECEIVER_NOT_EXPORTED)
 
@@ -202,6 +213,10 @@ class MainActivity : Activity() {
         boxBt = findViewById(R.id.boxBt)
         boxNet = findViewById(R.id.boxNet)
         boxUsb = findViewById(R.id.boxUsb)
+        boxTpe = findViewById(R.id.boxTpe)
+        boxSys = findViewById(R.id.boxSys)
+        tvTpe = findViewById(R.id.tvTpe)
+        rgSys = findViewById(R.id.rgSys)
         spBt = findViewById(R.id.spBt)
         tvBt = findViewById(R.id.tvBt)
         etIp = findViewById(R.id.etIp)
@@ -476,6 +491,10 @@ class MainActivity : Activity() {
         boxBt.visibility = if (conn == CONN_BT) View.VISIBLE else View.GONE
         boxNet.visibility = if (conn == CONN_NET) View.VISIBLE else View.GONE
         boxUsb.visibility = if (conn == CONN_USB) View.VISIBLE else View.GONE
+        boxTpe.visibility = if (conn == CONN_TPE) View.VISIBLE else View.GONE
+        boxSys.visibility = if (conn == CONN_SYS) View.VISIBLE else View.GONE
+        // Le massicot ne concerne que l'envoi direct ESC/POS.
+        cbCut.visibility = if (conn == CONN_SYS) View.GONE else View.VISIBLE
         when (conn) {
             // Au démarrage, ne pas imposer la demande d'autorisation : on liste seulement si déjà accordée.
             CONN_BT -> if (btDevices.isEmpty()) {
@@ -484,7 +503,26 @@ class MainActivity : Activity() {
                 else tvBt.text = "Appuyez sur « Actualiser » pour lister les imprimantes Bluetooth appairées."
             }
             CONN_USB -> detectUsb()
+            CONN_TPE -> if (Build.VERSION.SDK_INT < 31 ||
+                checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) detectTpe()
         }
+    }
+
+    /** Cherche l'imprimante intégrée du TPE. Renvoie null si absente (message affiché). */
+    @SuppressLint("MissingPermission")
+    private fun detectTpe(): BluetoothDevice? {
+        val adapter = getSystemService(BluetoothManager::class.java)?.adapter
+        if (adapter == null) { tvTpe.text = "Pas d'imprimante intégrée détectée sur cet appareil."; return null }
+        if (!adapter.isEnabled) {
+            tvTpe.text = "Activez le Bluetooth : l'imprimante intégrée du TPE passe par lui (sans appairage)."
+            return null
+        }
+        val dev = adapter.bondedDevices.firstOrNull {
+            it.address.equals(INNER_ADDR, true) || (it.name ?: "").equals(INNER_NAME, true)
+        }
+        tvTpe.text = if (dev != null) "Imprimante intégrée trouvée : ${dev.name ?: INNER_NAME}. Prête."
+        else "Aucune imprimante intégrée trouvée. Sur un TPE PAX, Ingenico, Verifone…, utilisez « Impression Android »."
+        return dev
     }
 
     /** Demande l'autorisation Bluetooth (Android 12+) avant d'exécuter [then]. */
@@ -520,7 +558,7 @@ class MainActivity : Activity() {
             // Proposer en premier un appareil dont le nom ressemble à une imprimante.
             val guess = btDevices.indexOfFirst {
                 val n = (it.name ?: "").lowercase()
-                listOf("print", "pos", "mtp", "xp-", "rpp", "pt-", "goojprt", "zj", "58", "80").any { k -> n.contains(k) }
+                listOf("print", "pos", "mtp", "inner", "xp-", "rpp", "pt-", "goojprt", "zj", "58", "80").any { k -> n.contains(k) }
             }
             if (guess >= 0) spBt.setSelection(guess)
         }
@@ -551,6 +589,12 @@ class MainActivity : Activity() {
                     runPrint(test) { BluetoothLink(dev) }
                 }
             }
+            CONN_TPE -> withBluetooth {
+                val dev = detectTpe()
+                if (dev == null) printStatus("Imprimante intégrée introuvable (voir le message ci-dessus).", true)
+                else runPrint(test) { BluetoothLink(dev) }
+            }
+            CONN_SYS -> systemPrint(test)
             CONN_NET -> {
                 val ip = etIp.text.toString().trim()
                 val port = etPort.text.toString().toIntOrNull() ?: 9100
@@ -572,6 +616,31 @@ class MainActivity : Activity() {
                     printStatus("Acceptez l'accès à l'imprimante USB dans la fenêtre qui s'affiche.")
                 }
             }
+        }
+    }
+
+    /** Impression par le système Android : TPE avec service d'impression, imprimantes Wi-Fi, PDF. */
+    private fun systemPrint(test: Boolean) {
+        val pm = getSystemService(android.print.PrintManager::class.java)
+        if (pm == null) { printStatus("L'impression Android n'est pas disponible sur cet appareil.", true); return }
+        val copies = (etCopies.text.toString().toIntOrNull() ?: 1).coerceIn(1, 50)
+        val fmt = if (test) Fmt.CODE128 else batchFmt
+        val base = if (test) listOf("TEST-123") else batchValues
+        val values = if (copies > 1) base.flatMap { v -> List(copies) { v } } else base
+        val roll = rgSys.checkedRadioButtonId == R.id.rbSysRoll
+        val paper = paperMm()
+        val name = if (test) "test-impression" else Exporter.pdfFileName().removeSuffix(".pdf")
+        val adapter = BatchPrintAdapter(name, fmt, values, if (test) true else batchShowText, roll,
+            colChoices[spCols.selectedItemPosition], paper)
+        val attrs = android.print.PrintAttributes.Builder()
+            .setMediaSize(BatchPrintAdapter.mediaFor(roll, paper))
+            .setColorMode(android.print.PrintAttributes.COLOR_MODE_MONOCHROME)
+            .build()
+        try {
+            pm.print(name, adapter, attrs)
+            printStatus("Choisissez l'imprimante dans la fenêtre d'impression d'Android (${values.size} étiquette(s)).")
+        } catch (e: Exception) {
+            printStatus("Impression Android impossible : ${e.message}", true)
         }
     }
 
@@ -623,7 +692,8 @@ class MainActivity : Activity() {
             .putBoolean("header", cbHeader.isChecked)
             .putInt("cols", spCols.selectedItemPosition)
             .putBoolean("text", cbText.isChecked)
-            .putInt("conn", spConn.selectedItemPosition)
+            .putInt("conn2", spConn.selectedItemPosition)
+            .putBoolean("sysRoll", rgSys.checkedRadioButtonId == R.id.rbSysRoll)
             .putString("bt", btDevices.getOrNull(spBt.selectedItemPosition)?.address ?: savedBtAddress)
             .putString("ip", etIp.text.toString())
             .putString("port", etPort.text.toString())
@@ -650,7 +720,10 @@ class MainActivity : Activity() {
         cbHeader.isChecked = p.getBoolean("header", true)
         spCols.setSelection(p.getInt("cols", 1).coerceIn(0, colChoices.size - 1))
         cbText.isChecked = p.getBoolean("text", true)
-        spConn.setSelection(p.getInt("conn", 0).coerceIn(0, 2))
+        val conn = if (p.contains("conn2")) p.getInt("conn2", CONN_BT)
+            else when (p.getInt("conn", 0)) { 1 -> CONN_NET; 2 -> CONN_USB; else -> CONN_BT }
+        spConn.setSelection(conn.coerceIn(0, CONN_SYS))
+        rgSys.check(if (p.getBoolean("sysRoll", true)) R.id.rbSysRoll else R.id.rbSysSheet)
         etIp.setText(p.getString("ip", ""))
         etPort.setText(p.getString("port", "9100"))
         spPaper.setSelection(p.getInt("paper", 0).coerceIn(0, paperChoices.size - 1))

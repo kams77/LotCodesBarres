@@ -14,6 +14,9 @@ Application Android qui génère des codes-barres **en lot** et les exporte en *
 - Le fichier s'ouvre dans le menu de partage d'Android : enregistrer dans Fichiers, Drive, WhatsApp, impression…
 - **Enregistrer le PDF** directement sur le téléphone (choix du dossier), ou l'**envoyer** (WhatsApp, Gmail, Drive…).
 - **Import en ligne** : lien Google Sheets (partagé « Tous les utilisateurs disposant du lien ») ou fichier CSV/TXT ; la 1re colonne est utilisée.
+- **TPE à imprimante intégrée** : Sunmi (V2, V2 Pro, P2, T2…) et modèles compatibles « InnerPrinter », détectée automatiquement.
+- **Impression Android** : services d'impression des TPE (PAX, Ingenico, Verifone… selon le fabricant), imprimantes Wi-Fi
+  (HP, Epson, Canon, Brother, Mopria) ou « Enregistrer au format PDF » ; étiquettes sur rouleau 58/80 mm ou planche A4.
 - **Imprimante POS thermique (ESC/POS)** : Bluetooth (appareil appairé), Wi-Fi/réseau (IP + port 9100) ou USB (câble OTG) ;
   papier 58 mm (384 points) ou 80 mm (576 points), copies par code, coupe automatique, page de test.
 - Fonctionne aussi sans Internet (sauf l'import en ligne). Android 8.0 ou plus.

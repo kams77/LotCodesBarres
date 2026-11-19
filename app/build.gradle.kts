@@ -11,8 +11,8 @@ android {
         applicationId = "cd.codesbarres.lot"
         minSdk = 26          // Android 8.0 et plus
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "2.0"
     }
 
     lint {

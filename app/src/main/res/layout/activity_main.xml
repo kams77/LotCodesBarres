@@ -145,6 +145,22 @@
             <Button android:id="@+id/btnUsbDetect" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Détecter" />
         </LinearLayout>
 
+        <LinearLayout android:id="@+id/boxTpe" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+                <TextView android:id="@+id/tvTpe" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Imprimante intégrée du TPE (Sunmi et compatibles)." android:textSize="14sp" />
+                <Button android:id="@+id/btnTpeDetect" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Détecter" />
+            </LinearLayout>
+            <TextView style="@style/Hint" android:text="Pour un autre TPE (PAX, Ingenico, Verifone…), choisissez « Impression Android » : l'application passe par le service d'impression installé par le fabricant." />
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/boxSys" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+            <RadioGroup android:id="@+id/rgSys" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <RadioButton android:id="@+id/rbSysRoll" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:checked="true" android:text="Étiquettes (rouleau)" />
+                <RadioButton android:id="@+id/rbSysSheet" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Planche A4" />
+            </RadioGroup>
+            <TextView style="@style/Hint" android:text="Ouvre l'impression d'Android : services d'impression des TPE, imprimantes Wi-Fi (HP, Epson, Canon, Brother, Mopria…) ou « Enregistrer au format PDF »." />
+        </LinearLayout>
+
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginEnd="8dp">
                 <TextView style="@style/Label" android:text="Papier" />

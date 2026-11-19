@@ -94,6 +94,37 @@ object Exporter {
         doc.close()
     }
 
+    /** Largeur de page en points pour un rouleau de [paperMm] mm. */
+    fun rollWidthPt(paperMm: Int): Int = Math.round(paperMm * 72f / 25.4f)
+
+    /**
+     * PDF « rouleau » : une étiquette par page, à la largeur du papier (58 ou 80 mm).
+     * Pour l'impression Android sur TPE et imprimantes à étiquettes.
+     */
+    fun ticketPdfTo(stream: OutputStream, f: Fmt, values: List<String>, showText: Boolean, paperMm: Int, progress: (Int) -> Unit) {
+        val pageW = rollWidthPt(paperMm)
+        val printableMm = if (paperMm >= 80) 72f else 48f
+        val margin = (paperMm - printableMm) / 2f * 72f / 25.4f
+        val boxW = pageW - 2 * margin
+        val doc = PdfDocument()
+        val img = Paint().apply { isFilterBitmap = false }
+        values.forEachIndexed { i, v ->
+            val b: Bitmap = BarcodeEngine.render(f, v, showText, 4)
+            val k = (if (f == Fmt.QR) boxW * 0.7f else boxW) / b.width
+            val dw = b.width * k
+            val dh = b.height * k
+            val pageH = Math.round(dh + 2 * margin).coerceAtLeast(40)
+            val page = doc.startPage(PdfDocument.PageInfo.Builder(pageW, pageH, i + 1).create())
+            val dx = (pageW - dw) / 2
+            page.canvas.drawBitmap(b, null, RectF(dx, margin, dx + dw, margin + dh), img)
+            doc.finishPage(page)
+            b.recycle()
+            if ((i + 1) % 10 == 0) progress(i + 1)
+        }
+        doc.writeTo(stream)
+        doc.close()
+    }
+
     fun zip(ctx: Context, f: Fmt, values: List<String>, showText: Boolean, progress: (Int) -> Unit): File {
         val out = File(exportDir(ctx), "codes-barres_${stamp()}.zip")
         ZipOutputStream(FileOutputStream(out)).use { zos ->
